@@ -1,0 +1,62 @@
+#Workflow for removal of spike-in genome
+
+# ==== CONFIGURATION ====
+READS_ROOT   := ../FAB_classproject/FAB_concat
+REF_DIR      := ../FAB_classproject
+OUT_ROOT     := ../FAB_classproject/FAB_results
+
+REF          := $(REF_DIR)/DCS.fasta
+REF_INDEX    := $(REF_DIR)/DCS.mmi
+
+# ==== TOOLS ====
+MINIMAP2     := minimap2
+SAMTOOLS     := samtools
+SEQKIT       := seqkit
+GZIP         := gzip
+
+# ==== DISCOVER CONCATENATED FASTQ FILES ====
+FASTQ_FILES  := $(shell find $(READS_ROOT) -type f -name "*.fastq.gz")
+
+# For each FASTQ, define a corresponding clean FASTQ in OUT_ROOT
+CLEAN_FASTQS := $(patsubst $(READS_ROOT)/%.fastq.gz,$(OUT_ROOT)/%.clean.fastq,$(FASTQ_FILES))
+
+# For each clean FASTQ, define a compressed version
+COMPRESSED_FASTQS := $(patsubst %.fastq,%.fastq.gz,$(CLEAN_FASTQS))
+
+# ==== TARGETS ====
+
+# Default workflow: build index, clean reads, compress, QC
+all: $(REF_INDEX) $(COMPRESSED_FASTQS) qc
+
+# Index the spike-in reference
+$(REF_INDEX): $(REF)
+        $(MINIMAP2) -d $@ $<
+
+# Rule to clean each concatenated FASTQ file
+$(OUT_ROOT)/%.clean.fastq: $(READS_ROOT)/%.fastq.gz $(REF_INDEX)
+        @mkdir -p $(dir $@)
+        @base=$$(basename $< .fastq.gz); \
+        gzip -cd $< | \
+        $(MINIMAP2) -x map-ont -a $(REF_INDEX) - | \
+        $(SAMTOOLS) view -b -f 4 -o $(OUT_ROOT)/$$base.unmapped.bam; \
+        $(SAMTOOLS) fastq $(OUT_ROOT)/$$base.unmapped.bam > $@
+
+# Rule to compress each cleaned FASTQ
+$(OUT_ROOT)/%.clean.fastq.gz: $(OUT_ROOT)/%.clean.fastq
+        @echo "Compressing $< ..."
+        $(GZIP) -c $< > $@
+
+# QC stats for all concatenated FASTQs
+qc: $(COMPRESSED_FASTQS)
+        @for fq in $(FASTQ_FILES); do \
+                base=$$(basename $$fq .fastq.gz); \
+                echo "QC for $$fq:"; \
+                $(SEQKIT) stats $$fq $(OUT_ROOT)/$$base.clean.fastq.gz; \
+    done
+
+# Clean intermediate files
+clean:
+        rm -f $(REF_INDEX)
+        find $(OUT_ROOT) -name "*.unmapped.bam" -delete
+
+.PHONY: all qc clean compress
