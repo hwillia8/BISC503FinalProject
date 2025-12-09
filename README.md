@@ -1,2 +1,4 @@
 # BISC503FinalProject
 Final project for bioinformatics, in which a baseline annotated genome is established for multiple fungal and algal partners. 
+
+this project is ultimately focused on how synthetic fungal-algal mutualism might respond to different environments and, separately, how it might evolve over time. This would invoke some “cotranscriptomic” analysis to interpret gene expression data from the fungal and algal partners in those different environments, and some “cogenomic” analysis to identify/track mutations and infer their effects in both fungal and algal partners as they are experimentally coevolved. Both types of analyses, however, require the prior creation of some baseline suite of annotated reference genomes for the specific fungal and algal partners utilized in the experiments
