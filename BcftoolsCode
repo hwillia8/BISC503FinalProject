@@ -1,0 +1,111 @@
+#Filtering Clair3 SNVs with bcftools
+
+
+
+      #INPUT_DIR points to directory with Clair3 outputs
+      #GNU parallel runs jobs for samples b3 b4 b6 b7
+
+      #infile: original Clair3 merged VCF
+      #masked: intermediate file with low-quality genotypes masked
+      #filtered: final filtered VCF
+
+      #[ -f "$infile" ] ensures input exists, otherwise exits with error
+
+cd ~/bisc503/FAB_classproject/FAB_reads/a.nidulans-barcoded/bcftools_test
+
+INPUT_DIR="$HOME/bisc503/FAB_classproject/FAB_reads/a.nidulans-barcoded"
+export INPUT_DIR
+
+parallel --halt soon,fail=1 -j 8 '
+b={1}
+
+infile="${INPUT_DIR}/${b}.clair3merge.vcf.gz"
+masked="${b}.genotypes_masked.clair3.vcf.gz"
+filtered="${b}.filtered.clair3.vcf.gz"
+
+# Sanity check
+[ -f "$infile" ] || { echo "Missing input file: $infile"; exit 1; }
+
+bcftools +setGT "$infile" -- -t q -n . -i "FMT/DP<8 || FMT/GQ<20" \
+    | bgzip -c > "$masked"
+
+tabix -p vcf "$masked"
+
+bcftools view -i "QUAL>=30 && F_MISSING<0.3" "$masked" \
+    | bgzip -c > "$filtered"
+
+tabix -p vcf "$filtered"
+' ::: b3 b4 b6 b7
+
+
+  #Masking low-quality genotypes
+      #+setGT: plugin to modify genotypes
+      #-t q: target genotype quality
+      #-n .: set genotype to missing (.)
+      #-i "FMT/DP<8 || FMT/GQ<20": mask genotypes with depth <8 or genotype quality <20
+      #Output compressed with bgzip
+bcftools +setGT "$infile" -- -t q -n . -i "FMT/DP<8 || FMT/GQ<20"
+
+  #creates index for fast access
+tabix -p vcf "$masked"
+
+
+
+  #Filtering variants globally:
+      #Keep variants with overall quality ≥30, exclude variants with >30% missing genotypes (F_MISSING<0.3)
+
+bcftools view -i "QUAL>=30 && F_MISSING<0.3" "$masked"
+
+
+
+
+
+
+
+
+
+
+#Filtering Sniffles SVs with bcftools
+
+
+
+        #Same directory, same parallel loop over samples
+      #infile: Sniffles VCF
+      #outfile: filtered Sniffles VCF
+
+cd ~/bisc503/FAB_classproject/FAB_reads/a.nidulans-barcoded/bcftools_test
+
+INPUT_DIR="$HOME/bisc503/FAB_classproject/FAB_reads/a.nidulans-barcoded"
+export INPUT_DIR
+
+parallel -j 8 --halt soon,fail=1 '
+b={1}
+
+infile="${INPUT_DIR}/${b}_reads.sniffles.vcf.gz"
+outfile="${b}.filtered.sniffles.vcf.gz"
+
+# Check input file exists
+[ -f "$infile" ] || { echo "Missing input file: $infile"; exit 1; }
+
+echo "Filtering Sniffles variants for sample: $b"
+
+bcftools view -i "INFO/SUPPORT>=5 && INFO/VAF>=0.1 && QUAL>=30 && abs(INFO/SVLEN)>=50 && FMT/DV>=3 && FMT/GQ>=20" \
+    "$infile" -Oz -o "$outfile" && \
+tabix -p vcf "$outfile"
+
+' ::: b3 b4 b6 b7
+
+
+
+
+#Filter criteria:
+      #INFO/SUPPORT>=5: at least 5 supporting reads
+      #INFO/VAF>=0.1: variant allele frequency ≥10%
+      #QUAL>=30: variant quality score ≥30
+      #abs(INFO/SVLEN)>=50: structural variant length ≥50 bp
+      #FMT/DV>=3: at least 3 reads supporting the variant in genotype fields
+      #FMT/GQ>=20: genotype quality ≥20
+      #Output compressed (-Oz) and indexed with tabix
+bcftools view -i "INFO/SUPPORT>=5 && INFO/VAF>=0.1 && QUAL>=30 && abs(INFO/SVLEN)>=50 && FMT/DV>=3 && FMT/GQ>=20"
+
+
