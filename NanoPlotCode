@@ -1,0 +1,23 @@
+#Examples of code used for nanoplot
+
+  #running nanoplot on all files ending in _reads.fastq.gz, and output them into nanoplot_b3 directory
+NanoPlot --fastq *_reads.fastq.gz --loglength -o nanoplot_b3
+
+
+  #runs nanoplot of read length on log scale (--loglength) on a specific filtered FASTQ file, using 4 threads
+NanoPlot --fastq b13_reads.fastq_filtered.fastq.gz --threads 4 --loglength -o nanoplot_b13_filtered
+
+  #create a central directory for all nanoplot outputs
+mkdir ~/bisc503/FAB_classproject/FAB_nanoplots_filtered
+
+
+  #Repeated NanoPlot runs for multiple samples (b10, b11, … b16, chlamy), each with its own output folder.
+NanoPlot --fastq b10_reads.clean.fastq.gz --loglength -o ~/.../nanoplot_b10_clean
+
+
+  #iterates over all *.filtered.fastq.gz files, extracts the base name (b3_reads.filtered.fastq.gz → b3_reads),
+  #creates an output directory (nanoplot_b3_reads), and runs nanoplot on each file with 4 threads
+for f in *.filtered.fastq.gz; do base="${f%.filtered.fastq.gz}"; 
+outdir="nanoplot_${base}"; mkdir -p "$outdir"; NanoPlot --fastq "$f" --threads 4 --loglength -o "$outdir"; done
+
+
