@@ -1,0 +1,18 @@
+#examples of sniffles code used
+
+sniffles     --input chlamy_reads.sorted.bam     --vcf chlamy_reads.sniffles.vcf     --reference $ref
+
+grep "##contig" b3_reads.sniffles.vcf
+snpEff CHLAMY chlamy.filtered.sniffles.vcf.gz > chlamy.sniffles.snpEff.vcf.gz
+bgzip -f chlamy.sniffles.snpEff.vcf.gz
+tabix -p vcf chlamy.sniffles.snpEff.vcf.gz
+rm chlamy.sniffles.snpEff.vcf.gz
+tabix -p vcf chlamy.sniffles.snpEff.vcf.gz.gz
+rm chlamy.sniffles.snpEff.vcf.gz.gz.tbi
+gunzip chlamy.sniffles.snpEff.vcf.gz.gz
+mv chlamy.sniffles.snpEff.vcf.gz chlamy.sniffles.snpEff.vcf
+
+
+ls b*.filtered.clair3.vcf.gz b*.filtered.sniffles.vcf.gz 2>/dev/null | parallel -j 8 '
+    elif [[ $fname == *.filtered.sniffles ]]; then
+ls b*.filtered.clair3.vcf.gz b*.filtered.sniffles.vcf.gz 2>/dev/null | parallel -j 8 '
