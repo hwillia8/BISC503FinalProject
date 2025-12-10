@@ -15,12 +15,6 @@ head -n 30 chlamy_reads.sniffles.vcf
 wc -l chlamy_reads.sniffles.vcf
 
 
-    #Compressed annotated VCF with bgzip
-bgzip -f chlamy.sniffles.snpEff.vcf.gz
-
-
-    #Indexes with tabix for fast random access (needed for downstream tools like IGV or bcftools)
-tabix -p vcf chlamy.sniffles.snpEff.vcf.gz
 
 
 
