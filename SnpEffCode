@@ -1,50 +1,51 @@
 #Examples of SnpEff code used
 
 
+    #Moves into the snpEff directory and opens the snpEff.config file in nano
+    #This config file tells SnpEff where genomes are stored and how to build databases for annotation
 cd snpEff
 nano ~/micromamba/envs/bioinfo/share/snpeff-5.0-1/snpEff.config
+
+
+    #snpEff build creates annotation databases for specific organisms, -gff3 means you’re using GFF3 files as input annotation format,
+    #and -v enables verbose output
 snpEff build -gff3 -v ANIDULANS
 snpEff build -gff3 -v AORYZAE
 snpEff build -gff3 -v NCRASSA
 snpEff build -gff3 -v SCEREVISIAE
 snpEff build -gff3 -v CHLAMY
+
+    #Verified that these organisms are correctly listed in the config file.
 grep -A1 -E 'ANIDULANS|AORYZAE|NCRASSA|SCEREVISIAE|CHLAMY'   ~/micromamba/envs/bioinfo/share/snpeff-5.0-1/snpEff.config
 
+
+
+    #Runs SnpEff to annotate variants in VCFs produced by both Sniffles and Clair3
+    #CHLAMY tells SnpEff which genome database to use, and output is redirected to new annotated VCF files
 snpEff CHLAMY chlamy.filtered.clair3.vcf.gz > chlamy.clair3.snpEff.vcf.gz
 snpEff CHLAMY chlamy.filtered.sniffles.vcf.gz > chlamy.sniffles.snpEff.vcf.gz
-gunzip chlamy.clair3.snpEff.vcf.gz
 
 
-# Run snpEff on ONLY the filtered Clair3 + Sniffles VCFs in parallel
-    outfile='"$outdir"'/${fname}.snpEff.vcf
-    outfile='"$outdir"'/${fname}.snpEff.vcf
-  snpEff ann ANIDULANS $infile > $outfile
- 
-# Run snpEff on filtered Clair3 + Sniffles VCFs in parallel
+
+## Parallelization 
+# Run snpEff on filtered Clair3 + Sniffles VCFs in parallel for ANIDULANS
     # Create output name with .snpEff.vcf suffix
     outfile='"$outdir"'/${base}.snpEff.vcf
     snpEff ann ANIDULANS $infile > $outfile
 
-# Run snpEff on ONLY filtered Clair3 + Sniffles VCFs in parallel
+# Run snpEff on ONLY filtered Clair3 + Sniffles VCFs in parallel for NCRASSA
     # Output naming with .snpEff.vcf suffix
     outfile='"$outdir"'/${base}.snpEff.vcf
     snpEff ann NCRASSA $infile > $outfile
 
- # Run snpEff on ONLY filtered Clair3 + Sniffles VCFs in parallel
+ # Run snpEff on ONLY filtered Clair3 + Sniffles VCFs in parallel for AORYZAE
     # Output naming with .snpEff.vcf suffix
     outfile='"$outdir"'/${base}.snpEff.vcf
     snpEff ann AORYZAE $infile > $outfile
 
- # Run snpEff on ONLY filtered Clair3 + Sniffles VCFs in parallel
+ # Run snpEff on ONLY filtered Clair3 + Sniffles VCFs in parallel for SCEREVISIAE
     # Output naming with .snpEff.vcf suffix
     outfile='"$outdir"'/${base}.snpEff.vcf
     snpEff ann SCEREVISIAE $infile > $outfile
-
-
-
-
-
-
-
 
 
