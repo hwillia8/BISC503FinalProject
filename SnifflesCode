@@ -1,18 +1,30 @@
-#examples of sniffles code used
+#examples of sniffles code used in structural variant calling
 
+
+    #--input: BAM file with reads aligned to reference, --vcf: Output file containing structural variants,
+    #--reference: Reference genome used for alignment
 sniffles     --input chlamy_reads.sorted.bam     --vcf chlamy_reads.sniffles.vcf     --reference $ref
 
-grep "##contig" b3_reads.sniffles.vcf
-snpEff CHLAMY chlamy.filtered.sniffles.vcf.gz > chlamy.sniffles.snpEff.vcf.gz
+
+
+    #Lists VCF outputs across multiple barcoded samples, checks file size (ls -lh), previews first 30 lines (head),
+    #and counts number of variants (wc -l)
+ls barcode*/b*sniffles.vcf
+ls -lh chlamy_reads.sniffles.vcf
+head -n 30 chlamy_reads.sniffles.vcf
+wc -l chlamy_reads.sniffles.vcf
+
+
+    #Compressed annotated VCF with bgzip
 bgzip -f chlamy.sniffles.snpEff.vcf.gz
+
+
+    #Indexes with tabix for fast random access (needed for downstream tools like IGV or bcftools)
 tabix -p vcf chlamy.sniffles.snpEff.vcf.gz
-rm chlamy.sniffles.snpEff.vcf.gz
-tabix -p vcf chlamy.sniffles.snpEff.vcf.gz.gz
-rm chlamy.sniffles.snpEff.vcf.gz.gz.tbi
-gunzip chlamy.sniffles.snpEff.vcf.gz.gz
-mv chlamy.sniffles.snpEff.vcf.gz chlamy.sniffles.snpEff.vcf
 
 
-ls b*.filtered.clair3.vcf.gz b*.filtered.sniffles.vcf.gz 2>/dev/null | parallel -j 8 '
-    elif [[ $fname == *.filtered.sniffles ]]; then
-ls b*.filtered.clair3.vcf.gz b*.filtered.sniffles.vcf.gz 2>/dev/null | parallel -j 8 '
+
+##Parallelization:
+    #Lists multiple VCF files (from Clair3 and Sniffles) and uses GNU parallel with 8 jobs to process them simultaneously
+ls b*.filtered.clair3.vcf.gz b*.filtered.sniffles.vcf.gz 2>/dev/null | parallel -j 8 ' ... '
+
