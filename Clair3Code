@@ -1,0 +1,59 @@
+#Clair3 command to call SNVs for a specific organism
+
+
+REF=~/bisc503/FAB_classproject/FAB_reads/a.nidulans-barcoded/GCF_000011425.1_ASM1142v1_genomic.fna   # reference genome (A. nidulans)
+THREADS=8        # threads per Clair3 job
+JOBS=8           # number of parallel jobs
+MODEL=~/bisc503/FAB_classproject/models/clair3/r1041_e82_400bps_hac_v520        #pretrained Clair3 model for ONT R10.4.1 flowcells, 400 bp reads, HAC basecalling
+WORKDIR=~/bisc503/FAB_classproject/FAB_reads/a.nidulans-barcoded/               #Working directory containing BAM files and where outputs will be written
+
+
+
+  #ls finds all BAMs ending with _reads.sorted.bam and parallel -j ${JOBS} runs multiple jobs at once.
+ls ${WORKDIR}/*_reads.sorted.bam | parallel -j ${JOBS} "
+  BAM={}                                                    #current BAM file
+  SAMPLE=\$(basename {} | sed 's/_reads.sorted.bam//')        #strip suffix to get sample name
+  OUT=${WORKDIR}/clair3out_\${SAMPLE}                        #output directory for Clair3 results
+
+
+
+
+      #run_clair3.sh is the wrapper script
+      #--bam_fn: input BAM
+      #--ref_fn: reference genome
+      #--threads: CPU threads
+      #--model_path: pretrained ONT model
+      #--platform=ont: specifies Oxford Nanopore data
+      #--output: output directory
+      #--include_all_ctgs: ensures all contigs in the reference are considered
+run_clair3.sh --bam_fn=${BAM} --ref_fn=${REF} --threads=${THREADS} \
+              --model_path=${MODEL} --platform=ont --output=${OUT} \
+              --include_all_ctgs
+
+
+
+
+      #Clair3 produces merge_output.vcf.gz (and its tabix index .tbi)
+      #This block renames/moves them into the main WORKDIR with a clear sample-specific name (SAMPLE.clair3merge.vcf.gz)
+      #If the file isn’t found, prints a warning 
+if [ -f "${OUT}/merge_output.vcf.gz" ]; then
+  mv -f "${OUT}/merge_output.vcf.gz" "${WORKDIR}/${SAMPLE}.clair3merge.vcf.gz"
+  mv -f "${OUT}/merge_output.vcf.gz.tbi" "${WORKDIR}/${SAMPLE}.clair3merge.vcf.gz.tbi"
+else
+  echo "Warning: merge_output.vcf.gz not found for ${SAMPLE}" >&2
+fi
+
+
+
+
+
+
+      #Same structure, but with the Chlamydomonas reinhardtii reference genome
+      #Uses export so variables are available inside the parallel subshell
+      #The rest of the loop is identical: iterate BAMs, run Clair3, rename outputs.
+REF=~/.../CreinhardtiiCC_4532_707_v6.0.softmasked.fa
+WORKDIR=~/.../pass_CC1690AMs6-2/
+export REF THREADS JOBS MODEL WORKDIR
+
+
+
