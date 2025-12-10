@@ -49,3 +49,13 @@ snpEff CHLAMY chlamy.filtered.sniffles.vcf.gz > chlamy.sniffles.snpEff.vcf.gz
     snpEff ann SCEREVISIAE $infile > $outfile
 
 
+
+  #Compresses annotated VCF with bgzip
+bgzip -f chlamy.sniffles.snpEff.vcf.gz
+
+
+    #Indexes with tabix for fast random access (needed for downstream tools like IGV or bcftools)
+tabix -p vcf chlamy.sniffles.snpEff.vcf.gz
+
+
+
